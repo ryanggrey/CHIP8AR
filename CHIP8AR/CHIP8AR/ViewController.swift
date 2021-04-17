@@ -13,6 +13,7 @@ class ViewController: UIViewController {
     
     @IBOutlet var sceneView: ARSCNView!
     private var ch8View: UIView!
+    private var isGameScreenInitiated = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,15 +41,24 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: ARSCNViewDelegate {
-    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        guard let planeAnchor = anchor as? ARPlaneAnchor else { return }
-        
-        let width = CGFloat(planeAnchor.extent.x)
+    private func initiateGameScreen(node: SCNNode, anchor: ARPlaneAnchor) {
+        let width = CGFloat(anchor.extent.x)
         let height = width / 2
         let imageHolder = SCNNode(geometry: SCNPlane(width: width, height: height))
         imageHolder.eulerAngles.x = -.pi/2
         imageHolder.geometry?.firstMaterial?.diffuse.contents = ch8View
         node.addChildNode(imageHolder)
+        
+        isGameScreenInitiated = true
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard
+            let planeAnchor = anchor as? ARPlaneAnchor,
+            isGameScreenInitiated == false
+        else { return }
+        
+        initiateGameScreen(node: node, anchor: planeAnchor)
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
