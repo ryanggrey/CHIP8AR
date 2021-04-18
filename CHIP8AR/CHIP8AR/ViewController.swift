@@ -38,20 +38,21 @@ class ViewController: UIViewController {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
     }
-}
-
-extension ViewController: ARSCNViewDelegate {
+    
     private func initiateGameScreen(node: SCNNode, anchor: ARPlaneAnchor) {
         let width = CGFloat(anchor.extent.x)
         let height = width / 2
-        let imageHolder = SCNNode(geometry: SCNPlane(width: width, height: height))
-        imageHolder.eulerAngles.x = -.pi/2
-        imageHolder.geometry?.firstMaterial?.diffuse.contents = ch8View
-        node.addChildNode(imageHolder)
+        let gameScreenContainer = SCNNode(geometry: SCNPlane(width: width, height: height))
+        gameScreenContainer.eulerAngles.x = -.pi/2
+        gameScreenContainer.geometry?.firstMaterial?.diffuse.contents = ch8View
+        node.addChildNode(gameScreenContainer)
         
         isGameScreenInitiated = true
     }
-    
+}
+
+extension ViewController: ARSCNViewDelegate {
+
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         guard
             let planeAnchor = anchor as? ARPlaneAnchor,
