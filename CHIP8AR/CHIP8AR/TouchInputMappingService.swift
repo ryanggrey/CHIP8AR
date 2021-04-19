@@ -21,11 +21,31 @@ struct TouchInputMappingService {
             .left : .left,
             .right : .right
         ],
+        .blinky : [
+            .left : .left,
+            .right : .right,
+            .down : .down,
+            .up : .up
+        ],
         .breakout: [
             .left : .left,
             .right : .right
         ],
+        .cave : [
+            .tap : .primaryAction,
+            .up : .up,
+            .down : .down,
+            .left : .left,
+            .right : .right
+        ],
         .filter : [
+            .left : .left,
+            .right : .right
+        ],
+        .kaleidoscope : [
+            .tap : .primaryAction,
+            .up : .up,
+            .down : .down,
             .left : .left,
             .right : .right
         ],
@@ -48,10 +68,41 @@ struct TouchInputMappingService {
         .rocket : [
             .tap : .primaryAction
         ],
+        .spaceFlight : [
+            .tap : .primaryAction,
+            .longPress : .secondaryAction,
+            .down : .down,
+            .up : .up
+        ],
+        .spaceIntercept : [
+            .tap : .primaryAction,
+            .longPress : .secondaryAction,
+            .left : .left,
+            .up : .up,
+            .right : .right
+        ],
         .spaceInvaders : [
             .tap : .primaryAction,
             .left : .left,
             .right : .right
+        ],
+        .squash : [
+            .up : .up,
+            .down : .down
+        ],
+        .tank : [
+            .tap : .primaryAction,
+            .left : .left,
+            .right : .right,
+            .down : .down,
+            .up : .up
+        ],
+        .tapeWorm : [
+            .tap : .primaryAction,
+            .left : .left,
+            .right : .right,
+            .up : .up,
+            .down : .down
         ],
         .tetris : [
             .down : .secondaryAction,
@@ -62,9 +113,23 @@ struct TouchInputMappingService {
         .wipeOff : [
             .left : .left,
             .right : .right
+        ],
+        .worm : [
+            .tap : .primaryAction,
+            .left : .left,
+            .right : .right,
+            .up : .up,
+            .down : .down
+        ],
+        .xMirror : [
+            .tap : .primaryAction,
+            .up : .up,
+            .down : .down,
+            .left : .left,
+            .right : .right
         ]
     ]
-
+    
     func platformMapping(for romName: RomName) -> PlatformMapping? {
         return mapping[romName]
     }

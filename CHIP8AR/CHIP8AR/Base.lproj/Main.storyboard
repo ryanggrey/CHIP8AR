@@ -31,6 +31,7 @@
                         </constraints>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="8wD-N3-nVz" appends="YES" id="xgM-xM-LS6"/>
+                            <outletCollection property="gestureRecognizers" destination="K6u-1f-VMa" appends="YES" id="VFm-hc-xCC"/>
                         </connections>
                     </view>
                     <connections>
@@ -43,6 +44,16 @@
                         <action selector="handlePan:" destination="BV1-FR-VrT" id="OIC-7O-SiR"/>
                     </connections>
                 </panGestureRecognizer>
+                <tapGestureRecognizer id="K6u-1f-VMa">
+                    <connections>
+                        <action selector="handleTap:" destination="BV1-FR-VrT" id="Zfo-oN-zg4"/>
+                    </connections>
+                </tapGestureRecognizer>
+                <pongPressGestureRecognizer allowableMovement="10" minimumPressDuration="0.5" id="kqS-rQ-H1X">
+                    <connections>
+                        <action selector="handleLongPress:" destination="BV1-FR-VrT" id="SjS-kb-TgF"/>
+                    </connections>
+                </pongPressGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="75" y="44"/>
         </scene>

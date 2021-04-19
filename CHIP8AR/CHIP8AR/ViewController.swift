@@ -11,7 +11,6 @@ import ARKit
 import Chip8Emulator
 
 class ViewController: UIViewController {
-    
     @IBOutlet var sceneView: ARSCNView!
     private var chip8View: Chip8View!
     private var isGameScreenInitiated = false
@@ -144,33 +143,10 @@ extension ViewController {
     }
     
     @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
-        // TODO: fix issue where controls crash the engine if it isn't running already
-        
-        // TODOL remove once controls are stable
-//        switch gesture.state {
-//        case .ended:
-//            print("ended")
-//        case .began:
-//            print("began")
-//        case .failed:
-//            print("fail")
-//        case .cancelled:
-//            print("cancelled")
-//        case .changed:
-//            print("changed")
-//        case .possible:
-//            print("possible")
-//        case .recognized:
-//            print("recognised")
-//        @unknown default:
-//            print("unknown")
-//        }
-        
         if(gesture.state == .ended
             || gesture.state == .cancelled
             || gesture.state == .failed
-        )
-        {
+        ) {
             self.liftAllChip8Keys()
             return
         }
@@ -195,5 +171,59 @@ extension ViewController {
                 self.updateChip8Key(isPressed: true, touchInputCode: .down)
             }
         }
+    }
+    
+    @IBAction func handleTap(_ gesture: UITapGestureRecognizer) {
+        guard let chip8KeyCode = chip8KeyCode(for: .tap) else { return }
+        chip8Engine.handleKeyDown(key: chip8KeyCode)
+        
+        /*
+         tap gestures are discrete/atomic and there appears to
+         be no way be notified of imtermediary gesture state such
+         as touchDown, touchUp etc. This means we need to simulate
+         the touchUp event so that Chip8 doesn't end up thinking a
+         key has been pressed and never released
+         */
+        Timer.scheduledTimer(
+            timeInterval: 0.1,
+            target: self,
+            selector: #selector(self.didEndTap),
+            userInfo: nil,
+            repeats: false
+        )
+    }
+    
+    @objc private func didEndTap() {
+        guard let chip8KeyCode = chip8KeyCode(for: .tap) else { return }
+        
+        chip8Engine.handleKeyUp(key: chip8KeyCode)
+    }
+    
+    @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            didBeginLongPress()
+            return
+        case .ended:
+            didEndLongPress()
+            return
+        case .failed:
+            didEndLongPress()
+            return
+        default:
+            return
+        }
+    }
+    
+    private func didBeginLongPress() {
+        guard let chip8KeyCode = chip8KeyCode(for: .longPress) else { return }
+        
+        chip8Engine.handleKeyDown(key: chip8KeyCode)
+    }
+    
+    private func didEndLongPress() {
+        guard let chip8KeyCode = chip8KeyCode(for: .longPress) else { return }
+        
+        chip8Engine.handleKeyUp(key: chip8KeyCode)
     }
 }

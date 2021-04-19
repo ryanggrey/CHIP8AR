@@ -13,4 +13,5 @@ enum TouchInputCode: CaseIterable {
     case up
     case down
     case tap
+    case longPress
 }
