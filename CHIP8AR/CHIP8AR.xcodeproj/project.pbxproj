@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -15,6 +15,7 @@
 		161F4B7C262AF62A00F09940 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 161F4B7A262AF62A00F09940 /* LaunchScreen.storyboard */; };
 		161F4B87262AF62B00F09940 /* CHIP8ARTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161F4B86262AF62B00F09940 /* CHIP8ARTests.swift */; };
 		161F4B92262AF62B00F09940 /* CHIP8ARUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161F4B91262AF62B00F09940 /* CHIP8ARUITests.swift */; };
+		16683079262D6D3300B97E93 /* Chip8Emulator in Frameworks */ = {isa = PBXBuildFile; productRef = 16683078262D6D3300B97E93 /* Chip8Emulator */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				16683079262D6D3300B97E93 /* Chip8Emulator in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -144,6 +146,9 @@
 			dependencies = (
 			);
 			name = CHIP8AR;
+			packageProductDependencies = (
+				16683078262D6D3300B97E93 /* Chip8Emulator */,
+			);
 			productName = CHIP8AR;
 			productReference = 161F4B6C262AF62800F09940 /* CHIP8AR.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +220,9 @@
 				Base,
 			);
 			mainGroup = 161F4B63262AF62800F09940;
+			packageReferences = (
+				16683077262D6D3300B97E93 /* XCRemoteSwiftPackageReference "Chip8EmulatorPackage" */,
+			);
 			productRefGroup = 161F4B6D262AF62800F09940 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -593,6 +601,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		16683077262D6D3300B97E93 /* XCRemoteSwiftPackageReference "Chip8EmulatorPackage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ryanggrey/Chip8EmulatorPackage";
+			requirement = {
+				kind = exactVersion;
+				version = 0.0.11;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		16683078262D6D3300B97E93 /* Chip8Emulator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 16683077262D6D3300B97E93 /* XCRemoteSwiftPackageReference "Chip8EmulatorPackage" */;
+			productName = Chip8Emulator;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 161F4B64262AF62800F09940 /* Project object */;
 }
