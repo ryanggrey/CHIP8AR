@@ -22,7 +22,6 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         setupEmulator()
-        
         setupAR()
     }
     
@@ -54,7 +53,7 @@ class ViewController: UIViewController {
         sceneView.scene = SCNScene()
     }
     
-    fileprivate func start(romName: RomName) {
+    private func start(romName: RomName) {
         let rom = RomLoader.loadRam(from: romName)
         chip8Engine.start(with: rom)
     }
@@ -103,6 +102,9 @@ extension ViewController: Chip8EngineDelegate {
 
     func render(screen: Chip8Screen) {
         chip8View.screen = screen
-        chip8View.setNeedsDisplay()
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.chip8View.setNeedsDisplay()
+        }
     }
 }
