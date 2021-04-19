@@ -8,22 +8,22 @@
 import UIKit
 import SceneKit
 import ARKit
+import Chip8Emulator
 
 class ViewController: UIViewController {
     
     @IBOutlet var sceneView: ARSCNView!
-    private var ch8View: UIView!
+    private var chip8View: Chip8View!
     private var isGameScreenInitiated = false
+    private let chip8Engine = Chip8Engine()
+    private let beepPlayer = BeepPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        ch8View = UIView(frame: CGRect(x: 0, y: 0, width: 600, height: 300))
-        ch8View.backgroundColor = .blue
         
-        sceneView.delegate = self
-        sceneView.showsStatistics = true
-        sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
-        sceneView.scene = SCNScene()
+        setupEmulator()
+        
+        setupAR()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -39,15 +39,36 @@ class ViewController: UIViewController {
         sceneView.session.pause()
     }
     
-    private func initiateGameScreen(node: SCNNode, anchor: ARPlaneAnchor) {
+    private func setupEmulator() {
+        chip8Engine.delegate = self
+        let chip8Frame = CGRect(x: 0, y: 0, width: 600, height: 300)
+        chip8View = Chip8View(frame: chip8Frame)
+        chip8View.backgroundColor = .gray
+        chip8View.pixelColor = .purple
+    }
+    
+    private func setupAR() {
+        sceneView.delegate = self
+        sceneView.showsStatistics = true
+        sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
+        sceneView.scene = SCNScene()
+    }
+    
+    fileprivate func start(romName: RomName) {
+        let rom = RomLoader.loadRam(from: romName)
+        chip8Engine.start(with: rom)
+    }
+    
+    private func setupGameScreen(node: SCNNode, anchor: ARPlaneAnchor) {
         let width = CGFloat(anchor.extent.x)
         let height = width / 2
         let gameScreenContainer = SCNNode(geometry: SCNPlane(width: width, height: height))
         gameScreenContainer.eulerAngles.x = -.pi/2
-        gameScreenContainer.geometry?.firstMaterial?.diffuse.contents = ch8View
+        gameScreenContainer.geometry?.firstMaterial?.diffuse.contents = chip8View
         node.addChildNode(gameScreenContainer)
-        
         isGameScreenInitiated = true
+        
+        start(romName: .pong)
     }
 }
 
@@ -59,7 +80,7 @@ extension ViewController: ARSCNViewDelegate {
             isGameScreenInitiated == false
         else { return }
         
-        initiateGameScreen(node: node, anchor: planeAnchor)
+        setupGameScreen(node: node, anchor: planeAnchor)
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -72,5 +93,16 @@ extension ViewController: ARSCNViewDelegate {
     
     func sessionInterruptionEnded(_ session: ARSession) {
         // TODO
+    }
+}
+
+extension ViewController: Chip8EngineDelegate {
+    func beep() {
+        beepPlayer.play()
+    }
+
+    func render(screen: Chip8Screen) {
+        chip8View.screen = screen
+        chip8View.setNeedsDisplay()
     }
 }
