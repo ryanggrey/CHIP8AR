@@ -51,7 +51,6 @@ class ViewController: UIViewController {
         
         coachingView.goal = .verticalPlane
         coachingView.activatesAutomatically = false
-        coachingView.delegate = self
         setCoachingView(isHidden: false)
     }
     
