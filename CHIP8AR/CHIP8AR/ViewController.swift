@@ -13,6 +13,7 @@ import Chip8Emulator
 class ViewController: UIViewController {
     @IBOutlet var sceneView: ARSCNView!
     private var chip8View: Chip8View!
+    private let coachingView = ARCoachingOverlayView()
     private var isGameScreenInitiated = false
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
@@ -33,21 +34,29 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupCoaching()
         setupEmulator()
         setupAR()
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        let configuration = ARWorldTrackingConfiguration()
-        configuration.planeDetection = [.vertical]
-        sceneView.session.run(configuration)
+        reset()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
+    }
+    
+    private func setupCoaching() {
+        self.coachingView.frame = self.view.frame
+        self.view.addSubview(coachingView)
+        
+        coachingView.goal = .verticalPlane
+        coachingView.activatesAutomatically = false
+        coachingView.delegate = self
+        setCoachingView(isHidden: false)
+    }
+    
+    private func setCoachingView(isHidden: Bool) {
+        coachingView.setActive(!isHidden, animated: true)
     }
     
     private func setupEmulator() {
@@ -71,13 +80,32 @@ class ViewController: UIViewController {
     private func setupGameScreen(node: SCNNode, anchor: ARPlaneAnchor) {
         let width = CGFloat(anchor.extent.x)
         let height = width / 2
-        let gameScreenContainer = SCNNode(geometry: SCNPlane(width: width, height: height))
-        gameScreenContainer.eulerAngles.x = -.pi/2
-        gameScreenContainer.geometry?.firstMaterial?.diffuse.contents = chip8View
-        node.addChildNode(gameScreenContainer)
+        let chip8Node = SCNNode(geometry: SCNPlane(width: width, height: height))
+        chip8Node.eulerAngles.x = -.pi/2
+        chip8Node.geometry?.firstMaterial?.diffuse.contents = chip8View
+        node.addChildNode(chip8Node)
+                
         isGameScreenInitiated = true
-        
         start(romName: selectedRom)
+    }
+    
+    func reset() {
+        isGameScreenInitiated = false
+        chip8Engine.stop()
+        
+        sceneView.session.pause()
+        sceneView.scene.rootNode.enumerateChildNodes { (node, stop) in
+            node.removeFromParentNode()
+        }
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = [.vertical]
+        sceneView.session.run(
+            configuration,
+            options: [.removeExistingAnchors, .resetTracking, .resetSceneReconstruction]
+        )
+        
+        coachingView.session = sceneView.session
+        setCoachingView(isHidden: false)
     }
 }
 
@@ -88,19 +116,16 @@ extension ViewController: ARSCNViewDelegate {
             isGameScreenInitiated == false
         else { return }
         
+        setCoachingView(isHidden: true)
         setupGameScreen(node: node, anchor: planeAnchor)
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
-        // TODO
+        reset()
     }
     
     func sessionWasInterrupted(_ session: ARSession) {
-        // TODO
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // TODO
+        reset()
     }
 }
 
