@@ -60,8 +60,6 @@ class ViewController: UIViewController {
     
     private func setupAR() {
         sceneView.delegate = self
-        sceneView.showsStatistics = true
-        sceneView.debugOptions = ARSCNDebugOptions.showFeaturePoints
         sceneView.scene = SCNScene()
     }
     
