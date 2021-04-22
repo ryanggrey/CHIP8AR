@@ -10,14 +10,26 @@ import SceneKit
 import ARKit
 import Chip8Emulator
 
+private enum InputMode {
+    case chip8
+    case ar
+}
+
 class ViewController: UIViewController {
     @IBOutlet var sceneView: ARSCNView!
     private var chip8View: Chip8View!
     private let coachingView = ARCoachingOverlayView()
+    private var chip8Node: SCNNode?
+    // TODO: can this be removed in favour of nilling chip8Node?
     private var isGameScreenInitiated = false
+    
+    private var inputMode = InputMode.ar
+    private var panStart: SCNVector3?
+    private var lastPanLocation: SCNVector3?
+    
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
-    private let selectedRom = RomName.pong
+    private let selectedRom = RomName.spaceFlight
     
     private lazy var platformInputMappingService: TouchInputMappingService = {
         return TouchInputMappingService()
@@ -34,6 +46,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupGestures()
         setupCoaching()
         setupEmulator()
         setupAR()
@@ -69,6 +82,8 @@ class ViewController: UIViewController {
     private func setupAR() {
         sceneView.delegate = self
         sceneView.scene = SCNScene()
+        sceneView.automaticallyUpdatesLighting = true
+        sceneView.debugOptions = [.showWorldOrigin]
     }
     
     private func start(romName: RomName) {
@@ -83,7 +98,9 @@ class ViewController: UIViewController {
         chip8Node.eulerAngles.x = -.pi/2
         chip8Node.geometry?.firstMaterial?.diffuse.contents = chip8View
         node.addChildNode(chip8Node)
-                
+        
+        self.chip8Node = chip8Node
+        
         isGameScreenInitiated = true
         start(romName: selectedRom)
     }
@@ -144,6 +161,19 @@ extension ViewController: Chip8EngineDelegate {
 
 // Touch Inputs
 extension ViewController {
+    private func setupGestures() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        
+        tap.require(toFail: pan)
+        pan.require(toFail: longPress)
+
+        view.addGestureRecognizer(tap)
+        view.addGestureRecognizer(pan)
+        view.addGestureRecognizer(longPress)
+    }
+    
     private func liftAllChip8Keys() {
         TouchInputCode.allCases.forEach { touchInputCode in
             self.updateChip8Key(isPressed: false, touchInputCode: touchInputCode)
@@ -164,7 +194,53 @@ extension ViewController {
         }
     }
     
+    private func repositionChip8Node(_ gesture: UIGestureRecognizer) {
+        guard let chip8Node = chip8Node else { return }
+        
+        let location = gesture.location(in: self.view)
+        switch gesture.state {
+        case .began:
+            guard
+                let hitResult = sceneView.hitTest(location, options: nil).first
+            else { return }
+            
+            let coordinates = hitResult.worldCoordinates
+            panStart = sceneView.projectPoint(coordinates)
+            self.lastPanLocation = coordinates
+            
+        case .changed:
+            guard
+                let lastPanLocation = lastPanLocation,
+                let panStart = panStart
+            else { return }
+            
+            let viewTouchPosition = SCNVector3(location.x, location.y, CGFloat(panStart.z))
+            let worldTouchPosition = sceneView.unprojectPoint(viewTouchPosition)
+                        
+            let movementVector = SCNVector3(
+                (worldTouchPosition.x - lastPanLocation.x),
+                (worldTouchPosition.y - lastPanLocation.y),
+                0
+            )
+            
+            chip8Node.localTranslate(by: movementVector)
+            self.lastPanLocation = worldTouchPosition
+            
+        case .cancelled, .ended, .failed:
+            panStart = nil
+            lastPanLocation = nil
+            
+        default:
+            break
+        }
+    }
+    
     @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
+        if inputMode == .ar {
+            repositionChip8Node(gesture)
+            return
+        }
+        
         if(gesture.state == .ended
             || gesture.state == .cancelled
             || gesture.state == .failed
@@ -220,7 +296,7 @@ extension ViewController {
         
         chip8Engine.handleKeyUp(key: chip8KeyCode)
     }
-    
+        
     @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
