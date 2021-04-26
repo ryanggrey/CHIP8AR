@@ -197,12 +197,14 @@ extension ViewController {
     }
     
     private func repositionChip8Node(_ gesture: UIGestureRecognizer) {
+        // TODO: hittest
+        
         let location = gesture.location(in: self.view)
         guard
             let chip8Node = chip8Node,
             let raycastQuery = sceneView.raycastQuery(
                 from: location,
-                allowing: .estimatedPlane,
+                allowing: .existingPlaneInfinite,
                 alignment: .vertical
             ),
             let raycastResult = sceneView.session.raycast(raycastQuery).first
