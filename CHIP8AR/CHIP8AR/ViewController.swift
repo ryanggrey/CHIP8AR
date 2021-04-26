@@ -200,7 +200,10 @@ extension ViewController {
         // TODO: hittest
         
         let location = gesture.location(in: self.view)
+        let isWithinGameBounds = sceneView.hitTest(location, options: nil).first != nil
+        
         guard
+            isWithinGameBounds,
             let chip8Node = chip8Node,
             let raycastQuery = sceneView.raycastQuery(
                 from: location,
