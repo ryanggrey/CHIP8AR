@@ -272,7 +272,10 @@ extension ViewController {
     }
     
     @IBAction func handleTap(_ gesture: UITapGestureRecognizer) {
-        guard let chip8KeyCode = chip8KeyCode(for: .tap) else { return }
+        guard
+            inputMode == .chip8,
+            let chip8KeyCode = chip8KeyCode(for: .tap)
+        else { return }
         chip8Engine.handleKeyDown(key: chip8KeyCode)
         
         /*
@@ -298,6 +301,11 @@ extension ViewController {
     }
         
     @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        if inputMode == .ar {
+            repositionChip8Node(gesture)
+            return
+        }
+        
         switch gesture.state {
         case .began:
             didBeginLongPress()
