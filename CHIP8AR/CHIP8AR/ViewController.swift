@@ -23,6 +23,7 @@ class ViewController: UIViewController {
     // TODO: can this be removed in favour of nilling chip8Node?
     private var isGameScreenInitiated = false
     private var inputMode = InputMode.ar
+    private var lastTouchPosition: simd_float3?
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
     private let selectedRom = RomName.spaceFlight
@@ -197,13 +198,16 @@ extension ViewController {
     }
     
     private func repositionChip8Node(_ gesture: UIGestureRecognizer) {
-        // TODO: hittest
+        switch gesture.state {
+        case .ended, .cancelled, .failed:
+            self.lastTouchPosition = nil
+            return;
+        default:
+            break;
+        }
         
         let location = gesture.location(in: self.view)
-        let isWithinGameBounds = sceneView.hitTest(location, options: nil).first != nil
-        
         guard
-            isWithinGameBounds,
             let chip8Node = chip8Node,
             let raycastQuery = sceneView.raycastQuery(
                 from: location,
@@ -213,10 +217,22 @@ extension ViewController {
             let raycastResult = sceneView.session.raycast(raycastQuery).first
         else { return }
         
-        
         let translation = raycastResult.worldTransform.columns.3
-        let simdWorldPosition = SIMD3<Float>(translation.x, translation.y, translation.z)
-        chip8Node.simdWorldPosition = simdWorldPosition
+        let newTouchPosition = simd_make_float3(translation)
+        
+        let touchPositionDelta: simd_float3
+        if let lastTouchPosition = lastTouchPosition {
+            touchPositionDelta = lastTouchPosition - newTouchPosition
+        } else {
+            touchPositionDelta = simd_make_float3(0)
+        }
+                
+        let oldSimdWorldPosition = chip8Node.simdWorldPosition
+        let newSimdWorldPosition = oldSimdWorldPosition - touchPositionDelta
+        
+        chip8Node.simdWorldPosition = newSimdWorldPosition
+
+        lastTouchPosition = newTouchPosition
     }
     
     @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
