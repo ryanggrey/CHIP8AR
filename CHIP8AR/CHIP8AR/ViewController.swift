@@ -132,6 +132,12 @@ extension ViewController: ARSCNViewDelegate {
         setupGameScreen(node: node, anchor: planeAnchor)
     }
     
+    func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
+        guard chip8Node == node else { return }
+        
+        reset()
+    }
+    
     func session(_ session: ARSession, didFailWithError error: Error) {
         reset()
     }
