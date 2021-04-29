@@ -10,13 +10,14 @@ import SceneKit
 import ARKit
 import Chip8Emulator
 
-private enum InputMode {
-    case chip8
-    case ar
+private enum InputMode: Int {
+    case chip8 = 0
+    case ar = 1
 }
 
 class ViewController: UIViewController {
     @IBOutlet var sceneView: ARSCNView!
+    @IBOutlet weak var inputControl: UISegmentedControl!
     private var chip8View: Chip8View!
     private let coachingView = ARCoachingOverlayView()
     private var chip8Node: SCNNode?
@@ -26,7 +27,7 @@ class ViewController: UIViewController {
     private var lastTouchPosition: simd_float3?
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
-    private let selectedRom = RomName.spaceFlight
+    private let selectedRom = RomName.spaceInvaders
     
     private lazy var platformInputMappingService: TouchInputMappingService = {
         return TouchInputMappingService()
@@ -44,6 +45,7 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         setupGestures()
+        setupInputControl()
         setupCoaching()
         setupEmulator()
         setupAR()
@@ -53,6 +55,29 @@ class ViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
+    }
+    
+    private func setupInputControl() {
+        self.inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
+        self.inputControl.selectedSegmentIndex = 0
+        updateInputControls(sender: self.inputControl)
+    }
+    
+    @objc private func updateInputControls(sender: UISegmentedControl) {
+        guard let inputMode = InputMode.init(rawValue: sender.selectedSegmentIndex) else {
+            return
+        }
+        
+        switch inputMode {
+        case .ar:
+            self.chip8Engine.stop()
+            break;
+        case .chip8:
+            self.chip8Engine.resume()
+            break;
+        }
+        
+        self.inputMode = inputMode
     }
     
     private func setupCoaching() {
@@ -79,8 +104,6 @@ class ViewController: UIViewController {
     private func setupAR() {
         sceneView.delegate = self
         sceneView.scene = SCNScene()
-        sceneView.automaticallyUpdatesLighting = true
-        sceneView.debugOptions = [.showWorldOrigin]
     }
     
     private func start(romName: RomName) {
