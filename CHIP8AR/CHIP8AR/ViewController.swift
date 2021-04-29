@@ -243,17 +243,7 @@ extension ViewController {
         let translation = raycastResult.worldTransform.columns.3
         let newTouchPosition = simd_make_float3(translation)
         
-        let touchPositionDelta: simd_float3
-        if let lastTouchPosition = lastTouchPosition {
-            touchPositionDelta = lastTouchPosition - newTouchPosition
-        } else {
-            touchPositionDelta = simd_make_float3(0)
-        }
-                
-        let oldSimdWorldPosition = chip8Node.simdWorldPosition
-        let newSimdWorldPosition = oldSimdWorldPosition - touchPositionDelta
-        
-        chip8Node.simdWorldPosition = newSimdWorldPosition
+        chip8Node.simdWorldPosition = newTouchPosition
 
         lastTouchPosition = newTouchPosition
     }
