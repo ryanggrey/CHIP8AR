@@ -199,9 +199,22 @@ extension ViewController: Chip8EngineDelegate {
 // Touch Inputs
 extension ViewController {
     private func setupGestures() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        let tap = UITapGestureRecognizer(
+            target: self,
+            action: #selector(handleTap(_:))
+        )
+        let pan = UIPanGestureRecognizer(
+            target: self,
+            action: #selector(handlePan(_:))
+        )
+        let longPress = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleLongPress(_:))
+        )
+        let pinch = UIPinchGestureRecognizer(
+            target: self,
+            action: #selector(handlePinch(_:))
+        )
         
         tap.require(toFail: pan)
         pan.require(toFail: longPress)
@@ -209,6 +222,7 @@ extension ViewController {
         view.addGestureRecognizer(tap)
         view.addGestureRecognizer(pan)
         view.addGestureRecognizer(longPress)
+        view.addGestureRecognizer(pinch)
     }
     
     private func liftAllChip8Keys() {
@@ -259,7 +273,7 @@ extension ViewController {
         lastTouchPosition = newTouchPosition
     }
     
-    @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
+    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         if mode == .position {
             repositionChip8Node(gesture)
             return
@@ -295,7 +309,7 @@ extension ViewController {
         }
     }
     
-    @IBAction func handleTap(_ gesture: UITapGestureRecognizer) {
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
         guard
             mode == .play,
             let chip8KeyCode = chip8KeyCode(for: .tap)
@@ -324,7 +338,7 @@ extension ViewController {
         chip8Engine.handleKeyUp(key: chip8KeyCode)
     }
         
-    @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         if mode == .play {
             repositionChip8Node(gesture)
             return
@@ -355,5 +369,9 @@ extension ViewController {
         guard let chip8KeyCode = chip8KeyCode(for: .longPress) else { return }
         
         chip8Engine.handleKeyUp(key: chip8KeyCode)
+    }
+    
+    @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
+        
     }
 }
