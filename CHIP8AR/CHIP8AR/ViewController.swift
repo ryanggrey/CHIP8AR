@@ -56,9 +56,9 @@ class ViewController: UIViewController {
     }
     
     private func setupInputControl() {
-        self.inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
-        self.inputControl.selectedSegmentIndex = 0
-        updateInputControls(sender: self.inputControl)
+        inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
+        inputControl.selectedSegmentIndex = 0
+        updateInputControls(sender: inputControl)
     }
     
     @objc private func updateInputControls(sender: UISegmentedControl) {
@@ -68,10 +68,10 @@ class ViewController: UIViewController {
         
         switch inputMode {
         case .ar:
-            self.chip8Engine.stop()
+            chip8Engine.stop()
             break;
         case .chip8:
-            self.chip8Engine.resume()
+            chip8Engine.resume()
             break;
         }
         
@@ -79,9 +79,9 @@ class ViewController: UIViewController {
     }
     
     private func setupCoaching() {
-        self.coachingView.session = sceneView.session
-        self.coachingView.frame = self.view.frame
-        self.view.addSubview(coachingView)
+        coachingView.session = sceneView.session
+        coachingView.frame = view.frame
+        view.addSubview(coachingView)
         
         coachingView.goal = .verticalPlane
         coachingView.activatesAutomatically = false
@@ -200,7 +200,7 @@ extension ViewController {
     
     private func liftAllChip8Keys() {
         TouchInputCode.allCases.forEach { touchInputCode in
-            self.updateChip8Key(isPressed: false, touchInputCode: touchInputCode)
+            updateChip8Key(isPressed: false, touchInputCode: touchInputCode)
         }
     }
     
@@ -209,25 +209,25 @@ extension ViewController {
     }
     
     private func updateChip8Key(isPressed: Bool, touchInputCode: TouchInputCode) {
-        guard let key = self.chip8KeyCode(for: touchInputCode) else { return }
+        guard let key = chip8KeyCode(for: touchInputCode) else { return }
         
         if isPressed {
-            self.chip8Engine.handleKeyDown(key: key)
+            chip8Engine.handleKeyDown(key: key)
         } else {
-            self.chip8Engine.handleKeyUp(key: key)
+            chip8Engine.handleKeyUp(key: key)
         }
     }
     
     private func repositionChip8Node(_ gesture: UIGestureRecognizer) {
         switch gesture.state {
         case .ended, .cancelled, .failed:
-            self.lastTouchPosition = nil
+            lastTouchPosition = nil
             return;
         default:
             break;
         }
         
-        let location = gesture.location(in: self.view)
+        let location = gesture.location(in: view)
         guard
             let chip8Node = chip8Node,
             let raycastQuery = sceneView.raycastQuery(
@@ -256,7 +256,7 @@ extension ViewController {
             || gesture.state == .cancelled
             || gesture.state == .failed
         ) {
-            self.liftAllChip8Keys()
+            liftAllChip8Keys()
             return
         }
         
@@ -265,19 +265,19 @@ extension ViewController {
         let yValue = translation.y
         let isXDominant = max(abs(xValue), abs(yValue)) == abs(xValue)
         
-        self.liftAllChip8Keys()
+        liftAllChip8Keys()
         
         if isXDominant {
             if xValue < 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .left)
+                updateChip8Key(isPressed: true, touchInputCode: .left)
             } else if xValue > 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .right)
+                updateChip8Key(isPressed: true, touchInputCode: .right)
             }
         } else {
             if yValue < 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .up)
+                updateChip8Key(isPressed: true, touchInputCode: .up)
             } else {
-                self.updateChip8Key(isPressed: true, touchInputCode: .down)
+                updateChip8Key(isPressed: true, touchInputCode: .down)
             }
         }
     }
@@ -299,7 +299,7 @@ extension ViewController {
         Timer.scheduledTimer(
             timeInterval: 0.1,
             target: self,
-            selector: #selector(self.didEndTap),
+            selector: #selector(didEndTap),
             userInfo: nil,
             repeats: false
         )
