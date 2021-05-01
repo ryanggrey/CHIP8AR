@@ -10,9 +10,10 @@ import SceneKit
 import ARKit
 import Chip8Emulator
 
-private enum InputMode: Int {
-    case chip8 = 0
-    case ar = 1
+private enum Mode: Int {
+    case anchor = 0
+    case position = 1
+    case play = 2
 }
 
 class ViewController: UIViewController {
@@ -21,7 +22,7 @@ class ViewController: UIViewController {
     private var chip8View: Chip8View!
     private let coachingView = ARCoachingOverlayView()
     private var chip8Node: SCNNode?
-    private var inputMode = InputMode.ar
+    private var mode = Mode.anchor
     private var lastTouchPosition: simd_float3?
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
@@ -57,25 +58,36 @@ class ViewController: UIViewController {
     
     private func setupInputControl() {
         inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
-        inputControl.selectedSegmentIndex = 0
-        updateInputControls(sender: inputControl)
+        update(mode: .anchor)
     }
     
     @objc private func updateInputControls(sender: UISegmentedControl) {
-        guard let inputMode = InputMode.init(rawValue: sender.selectedSegmentIndex) else {
+        guard let mode = Mode.init(rawValue: sender.selectedSegmentIndex) else {
             return
         }
         
-        switch inputMode {
-        case .ar:
+        update(mode: mode)
+    }
+    
+    private func update(mode: Mode) {
+        DispatchQueue.main.async { [weak self] in
+            self?.inputControl.selectedSegmentIndex = mode.rawValue
+        }
+        
+        switch mode {
+        case .anchor:
+            chip8Engine.stop()
+            reset()
+            break;
+        case .position:
             chip8Engine.stop()
             break;
-        case .chip8:
+        case .play:
             chip8Engine.resume()
             break;
         }
         
-        self.inputMode = inputMode
+        self.mode = mode
     }
     
     private func setupCoaching() {
@@ -152,6 +164,7 @@ extension ViewController: ARSCNViewDelegate {
         
         setCoachingView(isHidden: true)
         setupGameScreen(node: node, anchor: planeAnchor)
+        update(mode: .play)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
@@ -247,7 +260,7 @@ extension ViewController {
     }
     
     @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
-        if inputMode == .ar {
+        if mode == .position {
             repositionChip8Node(gesture)
             return
         }
@@ -284,7 +297,7 @@ extension ViewController {
     
     @IBAction func handleTap(_ gesture: UITapGestureRecognizer) {
         guard
-            inputMode == .chip8,
+            mode == .play,
             let chip8KeyCode = chip8KeyCode(for: .tap)
         else { return }
         chip8Engine.handleKeyDown(key: chip8KeyCode)
@@ -312,7 +325,7 @@ extension ViewController {
     }
         
     @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        if inputMode == .ar {
+        if mode == .play {
             repositionChip8Node(gesture)
             return
         }
