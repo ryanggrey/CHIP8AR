@@ -21,8 +21,6 @@ class ViewController: UIViewController {
     private var chip8View: Chip8View!
     private let coachingView = ARCoachingOverlayView()
     private var chip8Node: SCNNode?
-    // TODO: can this be removed in favour of nilling chip8Node?
-    private var isGameScreenInitiated = false
     private var inputMode = InputMode.ar
     private var lastTouchPosition: simd_float3?
     private let chip8Engine = Chip8Engine()
@@ -122,12 +120,11 @@ class ViewController: UIViewController {
         
         self.chip8Node = chip8Node
         
-        isGameScreenInitiated = true
         start(romName: selectedRom)
     }
     
     func reset() {
-        isGameScreenInitiated = false
+        chip8Node = nil
         chip8Engine.stop()
         
         sceneView.session.pause()
@@ -150,7 +147,7 @@ extension ViewController: ARSCNViewDelegate {
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         guard
             let planeAnchor = anchor as? ARPlaneAnchor,
-            isGameScreenInitiated == false
+            chip8Node == nil
         else { return }
         
         setCoachingView(isHidden: true)
