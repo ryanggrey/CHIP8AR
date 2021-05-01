@@ -10,9 +10,10 @@ import SceneKit
 import ARKit
 import Chip8Emulator
 
-private enum InputMode: Int {
-    case chip8 = 0
-    case ar = 1
+private enum Mode: Int {
+    case anchor = 0
+    case position = 1
+    case play = 2
 }
 
 class ViewController: UIViewController {
@@ -21,9 +22,7 @@ class ViewController: UIViewController {
     private var chip8View: Chip8View!
     private let coachingView = ARCoachingOverlayView()
     private var chip8Node: SCNNode?
-    // TODO: can this be removed in favour of nilling chip8Node?
-    private var isGameScreenInitiated = false
-    private var inputMode = InputMode.ar
+    private var mode = Mode.anchor
     private var lastTouchPosition: simd_float3?
     private let chip8Engine = Chip8Engine()
     private let beepPlayer = BeepPlayer()
@@ -58,31 +57,43 @@ class ViewController: UIViewController {
     }
     
     private func setupInputControl() {
-        self.inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
-        self.inputControl.selectedSegmentIndex = 0
-        updateInputControls(sender: self.inputControl)
+        inputControl.addTarget(self, action: #selector(updateInputControls), for: .valueChanged)
+        update(mode: .anchor)
     }
     
     @objc private func updateInputControls(sender: UISegmentedControl) {
-        guard let inputMode = InputMode.init(rawValue: sender.selectedSegmentIndex) else {
+        guard let mode = Mode.init(rawValue: sender.selectedSegmentIndex) else {
             return
         }
         
-        switch inputMode {
-        case .ar:
-            self.chip8Engine.stop()
+        update(mode: mode)
+    }
+    
+    private func update(mode: Mode) {
+        DispatchQueue.main.async { [weak self] in
+            self?.inputControl.selectedSegmentIndex = mode.rawValue
+        }
+        
+        switch mode {
+        case .anchor:
+            chip8Engine.stop()
+            reset()
             break;
-        case .chip8:
-            self.chip8Engine.resume()
+        case .position:
+            chip8Engine.stop()
+            break;
+        case .play:
+            chip8Engine.resume()
             break;
         }
         
-        self.inputMode = inputMode
+        self.mode = mode
     }
     
     private func setupCoaching() {
-        self.coachingView.frame = self.view.frame
-        self.view.addSubview(coachingView)
+        coachingView.session = sceneView.session
+        coachingView.frame = view.frame
+        view.addSubview(coachingView)
         
         coachingView.goal = .verticalPlane
         coachingView.activatesAutomatically = false
@@ -121,16 +132,15 @@ class ViewController: UIViewController {
         
         self.chip8Node = chip8Node
         
-        isGameScreenInitiated = true
         start(romName: selectedRom)
     }
     
     func reset() {
-        isGameScreenInitiated = false
+        chip8Node = nil
         chip8Engine.stop()
         
         sceneView.session.pause()
-        sceneView.scene.rootNode.enumerateChildNodes { (node, stop) in
+        sceneView.scene.rootNode.enumerateChildNodes { node, _ in
             node.removeFromParentNode()
         }
         let configuration = ARWorldTrackingConfiguration()
@@ -149,11 +159,12 @@ extension ViewController: ARSCNViewDelegate {
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         guard
             let planeAnchor = anchor as? ARPlaneAnchor,
-            isGameScreenInitiated == false
+            chip8Node == nil
         else { return }
         
         setCoachingView(isHidden: true)
         setupGameScreen(node: node, anchor: planeAnchor)
+        update(mode: .play)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
@@ -202,7 +213,7 @@ extension ViewController {
     
     private func liftAllChip8Keys() {
         TouchInputCode.allCases.forEach { touchInputCode in
-            self.updateChip8Key(isPressed: false, touchInputCode: touchInputCode)
+            updateChip8Key(isPressed: false, touchInputCode: touchInputCode)
         }
     }
     
@@ -211,25 +222,25 @@ extension ViewController {
     }
     
     private func updateChip8Key(isPressed: Bool, touchInputCode: TouchInputCode) {
-        guard let key = self.chip8KeyCode(for: touchInputCode) else { return }
+        guard let key = chip8KeyCode(for: touchInputCode) else { return }
         
         if isPressed {
-            self.chip8Engine.handleKeyDown(key: key)
+            chip8Engine.handleKeyDown(key: key)
         } else {
-            self.chip8Engine.handleKeyUp(key: key)
+            chip8Engine.handleKeyUp(key: key)
         }
     }
     
     private func repositionChip8Node(_ gesture: UIGestureRecognizer) {
         switch gesture.state {
         case .ended, .cancelled, .failed:
-            self.lastTouchPosition = nil
+            lastTouchPosition = nil
             return;
         default:
             break;
         }
         
-        let location = gesture.location(in: self.view)
+        let location = gesture.location(in: view)
         guard
             let chip8Node = chip8Node,
             let raycastQuery = sceneView.raycastQuery(
@@ -249,7 +260,7 @@ extension ViewController {
     }
     
     @IBAction func handlePan(_ gesture: UIPanGestureRecognizer) {
-        if inputMode == .ar {
+        if mode == .position {
             repositionChip8Node(gesture)
             return
         }
@@ -258,7 +269,7 @@ extension ViewController {
             || gesture.state == .cancelled
             || gesture.state == .failed
         ) {
-            self.liftAllChip8Keys()
+            liftAllChip8Keys()
             return
         }
         
@@ -267,26 +278,26 @@ extension ViewController {
         let yValue = translation.y
         let isXDominant = max(abs(xValue), abs(yValue)) == abs(xValue)
         
-        self.liftAllChip8Keys()
+        liftAllChip8Keys()
         
         if isXDominant {
             if xValue < 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .left)
+                updateChip8Key(isPressed: true, touchInputCode: .left)
             } else if xValue > 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .right)
+                updateChip8Key(isPressed: true, touchInputCode: .right)
             }
         } else {
             if yValue < 0 {
-                self.updateChip8Key(isPressed: true, touchInputCode: .up)
+                updateChip8Key(isPressed: true, touchInputCode: .up)
             } else {
-                self.updateChip8Key(isPressed: true, touchInputCode: .down)
+                updateChip8Key(isPressed: true, touchInputCode: .down)
             }
         }
     }
     
     @IBAction func handleTap(_ gesture: UITapGestureRecognizer) {
         guard
-            inputMode == .chip8,
+            mode == .play,
             let chip8KeyCode = chip8KeyCode(for: .tap)
         else { return }
         chip8Engine.handleKeyDown(key: chip8KeyCode)
@@ -301,7 +312,7 @@ extension ViewController {
         Timer.scheduledTimer(
             timeInterval: 0.1,
             target: self,
-            selector: #selector(self.didEndTap),
+            selector: #selector(didEndTap),
             userInfo: nil,
             repeats: false
         )
@@ -314,7 +325,7 @@ extension ViewController {
     }
         
     @IBAction func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        if inputMode == .ar {
+        if mode == .play {
             repositionChip8Node(gesture)
             return
         }
