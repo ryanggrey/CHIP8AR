@@ -81,6 +81,7 @@ class ViewController: UIViewController {
     }
     
     private func setupCoaching() {
+        self.coachingView.session = sceneView.session
         self.coachingView.frame = self.view.frame
         self.view.addSubview(coachingView)
         
