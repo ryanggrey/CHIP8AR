@@ -128,7 +128,7 @@ class ViewController: UIViewController {
         chip8Engine.stop()
         
         sceneView.session.pause()
-        sceneView.scene.rootNode.enumerateChildNodes { (node, stop) in
+        sceneView.scene.rootNode.enumerateChildNodes { node, _ in
             node.removeFromParentNode()
         }
         let configuration = ARWorldTrackingConfiguration()
