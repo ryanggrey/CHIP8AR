@@ -339,7 +339,7 @@ extension ViewController {
     }
         
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        if mode == .play {
+        if mode == .position {
             repositionChip8Node(gesture)
             return
         }
