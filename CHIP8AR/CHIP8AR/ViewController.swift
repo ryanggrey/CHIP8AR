@@ -372,6 +372,9 @@ extension ViewController {
     }
     
     @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-        
+        let scale = Float(gesture.scale)
+        let currentScaleVector = simd_make_float3(scale, scale, scale)
+        chip8Node?.simdScale *= currentScaleVector
+        gesture.scale = 1
     }
 }
